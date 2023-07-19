@@ -47,3 +47,6 @@ E4link*.aar
 gradlew*
 gradle/*
 docs
+
+# API Keys
+apikey.properties

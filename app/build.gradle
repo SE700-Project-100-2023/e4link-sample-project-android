@@ -1,14 +1,21 @@
 apply plugin: 'com.android.application'
 
+def apikeyPropertiesFile = rootProject.file("apikey.properties")
+def apikeyProperties = new Properties()
+apikeyProperties.load(new FileInputStream(apikeyPropertiesFile))
+
 android {
-    compileSdkVersion 30
-    buildToolsVersion '30.0.2'
+    compileSdk 34
+    buildToolsVersion '34.0.0'
     defaultConfig {
         applicationId 'com.empatica.empalinksample'
         minSdkVersion 19
-        targetSdkVersion 30
+        targetSdk 34
         versionCode 2323
         versionName "1.2"
+
+        // API keys
+        buildConfigField "String", "EMPATICA_API_KEY", apikeyProperties['EMPATICA_API_KEY']
     }
     buildTypes {
         release {
@@ -19,8 +26,8 @@ android {
     productFlavors {
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 }
 
@@ -54,7 +61,7 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.empatica.empalink:E4link:1.0.0@aar'
     implementation 'com.squareup.okhttp:okhttp:2.7.5'
 }

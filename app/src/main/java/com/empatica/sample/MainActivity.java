@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -20,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -43,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private static final int REQUEST_PERMISSION_ACCESS_COARSE_LOCATION = 1;
 
 
-    private static final String EMPATICA_API_KEY = ""; // TODO insert your API Key here
+    private static final String EMPATICA_API_KEY = BuildConfig.EMPATICA_API_KEY;
 
 
     private EmpaDeviceManager deviceManager = null;
@@ -116,17 +118,22 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
             }
         });
 
-        initEmpaticaDeviceManager();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            initEmpaticaDeviceManager();
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQUEST_PERMISSION_ACCESS_COARSE_LOCATION:
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Permission was granted, yay!
-                    initEmpaticaDeviceManager();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        initEmpaticaDeviceManager();
+                    }
                 } else {
                     // Permission denied, boo!
                     final boolean needRationale = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION);
@@ -138,7 +145,9 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                                     // try again
                                     if (needRationale) {
                                         // the "never ask again" flash is not set, try again with permission request
-                                        initEmpaticaDeviceManager();
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                            initEmpaticaDeviceManager();
+                                        }
                                     } else {
                                         // the "never ask again" flag is set so the permission requests is disabled, try open app settings to enable the permission
                                         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
@@ -160,10 +169,14 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.S)
     private void initEmpaticaDeviceManager() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, REQUEST_ENABLE_BT);
+        }
         // Android 6 (API level 23) now require ACCESS_COARSE_LOCATION permission to use BLE
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.ACCESS_FINE_LOCATION }, REQUEST_PERMISSION_ACCESS_COARSE_LOCATION);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_PERMISSION_ACCESS_COARSE_LOCATION);
         } else {
 
             if (TextUtils.isEmpty(EMPATICA_API_KEY)) {
@@ -241,27 +254,41 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         */
         switch (errorCode) {
             case ScanCallback.SCAN_FAILED_ALREADY_STARTED:
-                Log.e(TAG,"Scan failed: a BLE scan with the same settings is already started by the app");
+                Log.e(TAG, "Scan failed: a BLE scan with the same settings is already started by the app");
                 break;
             case ScanCallback.SCAN_FAILED_APPLICATION_REGISTRATION_FAILED:
-                Log.e(TAG,"Scan failed: app cannot be registered");
+                Log.e(TAG, "Scan failed: app cannot be registered");
                 break;
             case ScanCallback.SCAN_FAILED_FEATURE_UNSUPPORTED:
-                Log.e(TAG,"Scan failed: power optimized scan feature is not supported");
+                Log.e(TAG, "Scan failed: power optimized scan feature is not supported");
                 break;
             case ScanCallback.SCAN_FAILED_INTERNAL_ERROR:
-                Log.e(TAG,"Scan failed: internal error");
+                Log.e(TAG, "Scan failed: internal error");
                 break;
             default:
-                Log.e(TAG,"Scan failed with unknown error (errorCode=" + errorCode + ")");
+                Log.e(TAG, "Scan failed with unknown error (errorCode=" + errorCode + ")");
                 break;
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.S)
     @Override
     public void didRequestEnableBluetooth() {
         // Request the user to enable Bluetooth
         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_SCAN}, REQUEST_ENABLE_BT);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, REQUEST_ENABLE_BT);
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+        } else {
+            return;
+        }
         startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
     }
 

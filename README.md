@@ -15,7 +15,8 @@ The sample application implemented in the project has very simple functionalitie
 - Clone / download this repository.
 - Open the sample project in Android Studio.
 - Make sure you have a valid API key. You can request one for your Empatica Connect account from our [Developer Area][1].
-- Edit `MainActivity.java` and assign your API key to the `EMPATICA_API_KEY` constant .
+- Create `apikey.properties` in the root folder of the repository.
+- Inside `apikey.properties`, add the line `EMPATICA_API_KEY="<your API key>"`.
 - Download the Android E4 link 1.0 or newer SDK from our [Developer Area][1].
 - Unzip the archive you've downloaded and copy the `.aar` file you'll find inside into the `libs` folder contained in the sample project.
 - Build and run the project.
