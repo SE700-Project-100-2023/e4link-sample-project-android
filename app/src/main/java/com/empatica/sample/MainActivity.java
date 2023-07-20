@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.CalendarContract;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
@@ -34,6 +35,14 @@ import com.empatica.empalink.config.EmpaSensorType;
 import com.empatica.empalink.config.EmpaStatus;
 import com.empatica.empalink.delegate.EmpaDataDelegate;
 import com.empatica.empalink.delegate.EmpaStatusDelegate;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Date;
+import java.util.TimeZone;
 
 
 public class MainActivity extends AppCompatActivity implements EmpaDataDelegate, EmpaStatusDelegate {
@@ -361,7 +370,27 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
     @Override
     public void didReceiveGSR(float gsr, double timestamp) {
-        updateLabel(edaLabel, "" + gsr);
+        updateLabel(edaLabel, "" + gsr + " @ " + getDateTime(timestamp) + " - " + timestamp );
+    }
+
+    public static String getDateTime(double epochTime) {
+        // Convert the epoch time to milliseconds (Java Date API works with milliseconds)
+        long epochMillis = (long) (epochTime * 1000);
+
+        // Create a Date object from the epoch milliseconds
+        Date date = new Date(epochMillis);
+
+        // Set the timezone to NZST (New Zealand Standard Time)
+        TimeZone nzstTimeZone = TimeZone.getTimeZone("Pacific/Auckland");
+
+        // Create a SimpleDateFormat with the desired format and set the timezone
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        sdf.setTimeZone(nzstTimeZone);
+
+        // Format the date to NZST
+        String nzstFormattedDate = sdf.format(date);
+
+        return nzstFormattedDate;
     }
 
     @Override
