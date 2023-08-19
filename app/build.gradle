@@ -9,7 +9,8 @@ android {
     buildToolsVersion '34.0.0'
     defaultConfig {
         applicationId 'com.empatica.empalinksample'
-        minSdkVersion 19
+        minSdkVersion 24
+        minSdk 24
         targetSdk 34
         versionCode 2323
         versionName "1.2"
@@ -65,4 +66,12 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.empatica.empalink:E4link:1.0.0@aar'
     implementation 'com.squareup.okhttp:okhttp:2.7.5'
+    implementation 'com.github.polarofficial:polar-ble-sdk:5.1.0'
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.6'  // needed by polar-ble-sdk
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'  // needed by polar-ble-sdk
+    constraints {
+        implementation('org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10') {
+            because("kotlin-stdlib-jdk8 is now a part of kotlin-stdlib")
+        }
+    }
 }
