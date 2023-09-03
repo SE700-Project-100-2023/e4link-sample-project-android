@@ -11,7 +11,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.CalendarContract;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
@@ -35,14 +34,24 @@ import com.empatica.empalink.config.EmpaSensorType;
 import com.empatica.empalink.config.EmpaStatus;
 import com.empatica.empalink.delegate.EmpaDataDelegate;
 import com.empatica.empalink.delegate.EmpaStatusDelegate;
+import com.polar.sdk.api.PolarBleApi;
+import com.polar.sdk.api.PolarBleApiCallbackProvider;
+import com.polar.sdk.api.PolarBleApiDefaultImpl;
+import com.polar.sdk.api.model.PolarDeviceInfo;
+import com.polar.sdk.api.model.PolarHrBroadcastData;
+import com.polar.sdk.api.model.PolarHrData;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.UUID;
+
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.functions.Action;
+import io.reactivex.rxjava3.functions.Consumer;
 
 
 public class MainActivity extends AppCompatActivity implements EmpaDataDelegate, EmpaStatusDelegate {
@@ -81,11 +90,27 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
     private LinearLayout dataCnt;
 
+    private PolarBleApi polarApi;
+
+    private Disposable polarBroadcastDisposable;
+    private Disposable polarScanDisposable;
+    private Disposable polarHrDisposable;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+
+         polarApi = PolarBleApiDefaultImpl.defaultImplementation(getApplicationContext(), new HashSet<PolarBleApi.PolarBleSdkFeature>(Arrays.asList(
+                PolarBleApi.PolarBleSdkFeature.FEATURE_HR,
+                PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_SDK_MODE,
+                PolarBleApi.PolarBleSdkFeature.FEATURE_BATTERY_INFO,
+                PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_OFFLINE_RECORDING,
+                PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_ONLINE_STREAMING,
+                PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP,
+                PolarBleApi.PolarBleSdkFeature.FEATURE_DEVICE_INFO
+        )));
 
         setContentView(R.layout.activity_main);
 
@@ -115,6 +140,11 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
         final Button disconnectButton = findViewById(R.id.disconnectButton);
 
+        final Button polarBroadcastButton = findViewById(R.id.polarBroadcastButton);;
+        final Button polarConnectButton = findViewById(R.id.polarConnectButton);;
+        final Button polarScanButton = findViewById(R.id.polarScanButton);;
+        final Button polarHrButton = findViewById(R.id.polarHrButton);;
+
         disconnectButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -124,6 +154,120 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
                     deviceManager.disconnect();
                 }
+            }
+        });
+
+        polarBroadcastButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (MainActivity.this.polarBroadcastDisposable != null || MainActivity.this.polarBroadcastDisposable.isDisposed()) {
+                    polarBroadcastDisposable = polarApi.startListenForPolarHrBroadcasts(null)
+                            .subscribe(new Consumer<PolarHrBroadcastData>() {
+                                @Override
+                                public void accept(PolarHrBroadcastData polarHrBroadcastData) throws Throwable {
+
+                                }
+                            }, new Consumer<Throwable>() {
+                                @Override
+                                public void accept(Throwable throwable) throws Throwable {
+
+                                }
+                            }, new Action() {
+                                @Override
+                                public void run() throws Throwable {
+
+                                }
+                            });
+                }
+            }
+        });
+
+        polarConnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // TODO WORK
+                // https://github.com/polarofficial/polar-ble-sdk/blob/master/examples/example-android/androidBleSdkTestApp/app/src/main/java/com/polar/androidblesdk/MainActivity.kt
+                // Line 215
+            }
+        });
+
+        polarScanButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // TODO WORK
+                // https://github.com/polarofficial/polar-ble-sdk/blob/master/examples/example-android/androidBleSdkTestApp/app/src/main/java/com/polar/androidblesdk/MainActivity.kt
+                // Line 243
+            }
+        });
+
+        polarHrButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // TODO WORK
+                // https://github.com/polarofficial/polar-ble-sdk/blob/master/examples/example-android/androidBleSdkTestApp/app/src/main/java/com/polar/androidblesdk/MainActivity.kt
+                // Line 268
+            }
+        });
+
+        polarApi.setApiCallback(new PolarBleApiCallbackProvider() {
+            @Override
+            public void blePowerStateChanged(boolean b) {
+
+            }
+
+            @Override
+            public void deviceConnected(@NonNull PolarDeviceInfo polarDeviceInfo) {
+
+            }
+
+            @Override
+            public void deviceConnecting(@NonNull PolarDeviceInfo polarDeviceInfo) {
+
+            }
+
+            @Override
+            public void deviceDisconnected(@NonNull PolarDeviceInfo polarDeviceInfo) {
+
+            }
+
+            @Override
+            public void bleSdkFeatureReady(@NonNull String s, @NonNull PolarBleApi.PolarBleSdkFeature polarBleSdkFeature) {
+
+            }
+
+            @Override
+            public void streamingFeaturesReady(@NonNull String s, @NonNull Set<? extends PolarBleApi.PolarDeviceDataType> set) {
+
+            }
+
+            @Override
+            public void sdkModeFeatureAvailable(@NonNull String s) {
+
+            }
+
+            @Override
+            public void hrFeatureReady(@NonNull String s) {
+
+            }
+
+            @Override
+            public void disInformationReceived(@NonNull String s, @NonNull UUID uuid, @NonNull String s1) {
+
+            }
+
+            @Override
+            public void batteryLevelReceived(@NonNull String s, int i) {
+
+            }
+
+            @Override
+            public void hrNotificationReceived(@NonNull String s, @NonNull PolarHrData.PolarHrSample polarHrSample) {
+
+            }
+
+            @Override
+            public void polarFtpFeatureReady(@NonNull String s) {
+
             }
         });
 
@@ -220,6 +364,9 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         super.onDestroy();
         if (deviceManager != null) {
             deviceManager.cleanUp();
+        }
+        if (polarApi != null) {
+            polarApi.shutDown();
         }
     }
 
