@@ -8,6 +8,7 @@ import android.bluetooth.le.ScanCallback;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,6 +26,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import com.empatica.empalink.ConnectionNotAllowedException;
 import com.empatica.empalink.EmpaDeviceManager;
@@ -37,6 +39,7 @@ import com.empatica.empalink.delegate.EmpaStatusDelegate;
 import com.polar.sdk.api.PolarBleApi;
 import com.polar.sdk.api.PolarBleApiCallbackProvider;
 import com.polar.sdk.api.PolarBleApiDefaultImpl;
+import com.polar.sdk.api.errors.PolarInvalidArgument;
 import com.polar.sdk.api.model.PolarDeviceInfo;
 import com.polar.sdk.api.model.PolarHrBroadcastData;
 import com.polar.sdk.api.model.PolarHrData;
@@ -49,6 +52,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.functions.Action;
 import io.reactivex.rxjava3.functions.Consumer;
@@ -95,6 +99,8 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private Disposable polarBroadcastDisposable;
     private Disposable polarScanDisposable;
     private Disposable polarHrDisposable;
+    private Boolean isPolarDeviceConnected = false;
+    private String polarDeviceId = "8C4E5023";
 
 
     @Override
@@ -160,24 +166,31 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         polarBroadcastButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (MainActivity.this.polarBroadcastDisposable != null || MainActivity.this.polarBroadcastDisposable.isDisposed()) {
+                // https://github.com/polarofficial/polar-ble-sdk/blob/master/examples/example-android/androidBleSdkTestApp/app/src/main/java/com/polar/androidblesdk/MainActivity.kt
+                // Line 194
+                if (MainActivity.this.polarBroadcastDisposable == null || MainActivity.this.polarBroadcastDisposable.isDisposed()) {
+                    toggleButtonDown(polarBroadcastButton);
                     polarBroadcastDisposable = polarApi.startListenForPolarHrBroadcasts(null)
                             .subscribe(new Consumer<PolarHrBroadcastData>() {
                                 @Override
                                 public void accept(PolarHrBroadcastData polarHrBroadcastData) throws Throwable {
-
+                                    Log.d(TAG, "HR BROADCAST " + polarHrBroadcastData.getPolarDeviceInfo().getDeviceId() + ";  HR " + polarHrBroadcastData.getHr() + ";  BATT " + polarHrBroadcastData.getBatteryStatus());
                                 }
                             }, new Consumer<Throwable>() {
                                 @Override
                                 public void accept(Throwable throwable) throws Throwable {
-
+                                    toggleButtonUp(polarBroadcastButton);
+                                    Log.e(TAG, "Broadcast listener failed. Reason " + throwable.getMessage());
                                 }
                             }, new Action() {
                                 @Override
                                 public void run() throws Throwable {
-
+                                    Log.d(TAG, "Polar Broadcast complete");
                                 }
                             });
+                } else {
+                    toggleButtonUp(polarBroadcastButton);
+                    polarBroadcastDisposable.dispose();
                 }
             }
         });
@@ -185,49 +198,113 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         polarConnectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO WORK
                 // https://github.com/polarofficial/polar-ble-sdk/blob/master/examples/example-android/androidBleSdkTestApp/app/src/main/java/com/polar/androidblesdk/MainActivity.kt
                 // Line 215
+                try {
+                    if (isPolarDeviceConnected) {
+                        polarApi.disconnectFromDevice(polarDeviceId);
+                    } else {
+                        polarApi.connectToDevice(polarDeviceId);
+                    }
+                } catch (PolarInvalidArgument polarInvalidArgument) {
+                    String attemptType = isPolarDeviceConnected ? "disconnect" : "connect";
+                    Log.e(TAG, "Failed to " + attemptType + ". Reason: " + polarInvalidArgument.getMessage());
+                }
             }
         });
 
         polarScanButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO WORK
                 // https://github.com/polarofficial/polar-ble-sdk/blob/master/examples/example-android/androidBleSdkTestApp/app/src/main/java/com/polar/androidblesdk/MainActivity.kt
                 // Line 243
+                if (polarScanDisposable == null || polarScanDisposable.isDisposed()) {
+                    toggleButtonDown(polarScanButton);
+                    polarScanDisposable = polarApi.searchForDevice()
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(new Consumer<PolarDeviceInfo>() {
+                                @Override
+                                public void accept(PolarDeviceInfo polarDeviceInfo) throws Throwable {
+                                    Log.d(TAG, "polar device found id: " + polarDeviceInfo.getDeviceId() + " address: " + polarDeviceInfo.getAddress() + " rssi: " + polarDeviceInfo.getRssi() + " name: " + polarDeviceInfo.getName() + " isConnectable: " + polarDeviceInfo.isConnectable());
+                                }
+                            }, new Consumer<Throwable>() {
+                                @Override
+                                public void accept(Throwable throwable) throws Throwable {
+                                    toggleButtonUp(polarScanButton);
+                                    Log.e(TAG, "Polar device scan failed. Reason " + throwable.getMessage());
+                                }
+                            }, new Action() {
+                                @Override
+                                public void run() throws Throwable {
+                                    Log.d(TAG, "Polar Scan for Devices complete");
+                                }
+                            });
+                } else {
+                    toggleButtonUp(polarScanButton);
+                    polarScanDisposable.dispose();
+                }
             }
         });
 
         polarHrButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO WORK
                 // https://github.com/polarofficial/polar-ble-sdk/blob/master/examples/example-android/androidBleSdkTestApp/app/src/main/java/com/polar/androidblesdk/MainActivity.kt
                 // Line 268
+                if (polarHrDisposable == null || polarHrDisposable.isDisposed()) {
+                    toggleButtonDown(polarHrButton);
+                    polarHrDisposable = polarApi.startHrStreaming(polarDeviceId)
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(new Consumer<PolarHrData>() {
+                                @Override
+                                public void accept(PolarHrData polarHrData) throws Throwable {
+                                    for (PolarHrData.PolarHrSample sample : polarHrData.getSamples()) {
+                                        Log.d(TAG, "HR     bpm: " + sample.getHr() + "  rr (ms): " + sample.getRrsMs() + "  rrAvailable: " + sample.getRrAvailable() + "  contactStatus: " + sample.getContactStatus() + "  contactStatusSupported: " + sample.getContactStatusSupported());
+                                    }
+                                }
+                            }, new Consumer<Throwable>() {
+                                @Override
+                                public void accept(Throwable throwable) throws Throwable {
+                                    toggleButtonUp(polarHrButton);
+                                    Log.e(TAG, "Polar HR Stream Failed. Reason " + throwable.getMessage());
+                                }
+                            }, new Action() {
+                                @Override
+                                public void run() throws Throwable {
+                                    Log.d(TAG, "Polar HR Stream complete");
+                                }
+                            });
+                } else {
+                    toggleButtonUp(polarHrButton);
+                    polarHrDisposable.dispose();
+                }
             }
         });
 
         polarApi.setApiCallback(new PolarBleApiCallbackProvider() {
             @Override
             public void blePowerStateChanged(boolean b) {
-
+                Log.d(TAG, b ? "BLE Power (for Polar): On" : "BLE Power (for Polar): Off");
             }
 
             @Override
             public void deviceConnected(@NonNull PolarDeviceInfo polarDeviceInfo) {
-
+                Log.d(TAG, "POLAR DEVICE CONNECTED: " + polarDeviceInfo.getDeviceId());
+                polarDeviceId = polarDeviceInfo.getDeviceId();
+                isPolarDeviceConnected = true;
+                toggleButtonDown(polarConnectButton);
             }
 
             @Override
             public void deviceConnecting(@NonNull PolarDeviceInfo polarDeviceInfo) {
-
+                Log.d(TAG, "CONNECTING to POLAR DEVICE: " + polarDeviceInfo.getDeviceId());
             }
 
             @Override
             public void deviceDisconnected(@NonNull PolarDeviceInfo polarDeviceInfo) {
-
+                Log.d(TAG, "POLAR DEVICE DISCONNECTED: " + polarDeviceInfo.getDeviceId());
+                isPolarDeviceConnected = false;
+                toggleButtonUp(polarConnectButton);
             }
 
             @Override
@@ -247,17 +324,17 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
             @Override
             public void hrFeatureReady(@NonNull String s) {
-
+                Log.d(TAG, "POLAR HR FEATURE READINESS: " + s);
             }
 
             @Override
-            public void disInformationReceived(@NonNull String s, @NonNull UUID uuid, @NonNull String s1) {
-
+            public void disInformationReceived(@NonNull String s, @NonNull UUID uuid, @NonNull String value) {
+                Log.d(TAG, "POLAR DIS INFO uuid: " + uuid.toString() + "  value: " + value);
             }
 
             @Override
             public void batteryLevelReceived(@NonNull String s, int i) {
-
+                Log.d(TAG, "POLAR BATTERY LEVEL (" + s + "): " + Integer.toString(i));
             }
 
             @Override
@@ -589,6 +666,23 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                 }
             }
         });
+    }
+
+    void toggleButtonDown(Button button) {
+        toggleButton(button, true);
+    }
+
+    void toggleButtonUp(Button button) {
+        toggleButton(button, false);
+    }
+
+    void toggleButton(Button button, Boolean isDown) {
+        Drawable buttonDrawable = button.getBackground();
+        if (isDown) {
+            DrawableCompat.setTint(buttonDrawable, getColor(androidx.appcompat.R.color.primary_material_dark));
+        } else {
+            DrawableCompat.setTint(buttonDrawable, getColor(androidx.appcompat.R.color.primary_material_light));
+        }
     }
 
     void show() {
