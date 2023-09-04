@@ -170,25 +170,25 @@
             android:id="@+id/polarBroadcastButton"
             android:text="Polar Broadcast"
             android:layout_width="match_parent"
-            android:layout_height="22dp" />
+            android:layout_height="44dp" />
 
         <Button
             android:id="@+id/polarConnectButton"
             android:text="Polar Scan"
             android:layout_width="match_parent"
-            android:layout_height="22dp" />
+            android:layout_height="44dp" />
 
         <Button
             android:id="@+id/polarScanButton"
             android:text="Polar Connect"
             android:layout_width="match_parent"
-            android:layout_height="22dp" />
+            android:layout_height="44dp" />
 
         <Button
             android:id="@+id/polarHrButton"
             android:text="Polar Heart Rate"
             android:layout_width="match_parent"
-            android:layout_height="22dp" />
+            android:layout_height="44dp" />
 
     </LinearLayout>
 
