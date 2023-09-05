@@ -92,6 +92,12 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
     private TextView deviceNameLabel;
 
+    private TextView polarConnectionStatusLabel;
+
+    private TextView polarHrLabel;
+
+    private TextView polarHrRrLabel;
+
     private LinearLayout dataCnt;
 
     private PolarBleApi polarApi;
@@ -100,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private Disposable polarScanDisposable;
     private Disposable polarHrDisposable;
     private Boolean isPolarDeviceConnected = false;
-    private String polarDeviceId = "8C4E5023";
+    private String polarDeviceId = "C5040528";
 
 
     @Override
@@ -143,6 +149,11 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
         deviceNameLabel = (TextView) findViewById(R.id.deviceName);
 
+        polarConnectionStatusLabel = (TextView) findViewById(R.id.polar_connection_status_label);
+
+        polarHrLabel = (TextView) findViewById(R.id.polar_hr_label);
+
+        polarHrRrLabel = (TextView) findViewById(R.id.polar_hr_rr_label);
 
         final Button disconnectButton = findViewById(R.id.disconnectButton);
 
@@ -175,6 +186,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                                 @Override
                                 public void accept(PolarHrBroadcastData polarHrBroadcastData) throws Throwable {
                                     Log.d(TAG, "HR BROADCAST " + polarHrBroadcastData.getPolarDeviceInfo().getDeviceId() + ";  HR " + polarHrBroadcastData.getHr() + ";  BATT " + polarHrBroadcastData.getBatteryStatus());
+                                    updateLabel(polarHrLabel, "[" + polarHrBroadcastData.getPolarDeviceInfo().getDeviceId() + "] HR BROADCAST: " + polarHrBroadcastData.getHr());
                                 }
                             }, new Consumer<Throwable>() {
                                 @Override
@@ -203,12 +215,15 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                 try {
                     if (isPolarDeviceConnected) {
                         polarApi.disconnectFromDevice(polarDeviceId);
+                        updateLabel(polarConnectionStatusLabel, "Disconnected from: " + polarDeviceId);
                     } else {
                         polarApi.connectToDevice(polarDeviceId);
+                        updateLabel(polarConnectionStatusLabel, "Connected to: " + polarDeviceId);
                     }
                 } catch (PolarInvalidArgument polarInvalidArgument) {
                     String attemptType = isPolarDeviceConnected ? "disconnect" : "connect";
                     Log.e(TAG, "Failed to " + attemptType + ". Reason: " + polarInvalidArgument.getMessage());
+                    updateLabel(polarConnectionStatusLabel, "Failed to " + attemptType + ". Reason: " + polarInvalidArgument.getMessage());
                 }
             }
         });
@@ -226,12 +241,14 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                                 @Override
                                 public void accept(PolarDeviceInfo polarDeviceInfo) throws Throwable {
                                     Log.d(TAG, "polar device found id: " + polarDeviceInfo.getDeviceId() + " address: " + polarDeviceInfo.getAddress() + " rssi: " + polarDeviceInfo.getRssi() + " name: " + polarDeviceInfo.getName() + " isConnectable: " + polarDeviceInfo.isConnectable());
+                                    updateLabel(polarConnectionStatusLabel, "polar device found id: " + polarDeviceInfo.getDeviceId() + " address: " + polarDeviceInfo.getAddress() + " rssi: " + polarDeviceInfo.getRssi() + " name: " + polarDeviceInfo.getName() + " isConnectable: " + polarDeviceInfo.isConnectable());
                                 }
                             }, new Consumer<Throwable>() {
                                 @Override
                                 public void accept(Throwable throwable) throws Throwable {
                                     toggleButtonUp(polarScanButton);
                                     Log.e(TAG, "Polar device scan failed. Reason " + throwable.getMessage());
+                                    updateLabel(polarConnectionStatusLabel, "Polar device scan failed. Reason " + throwable.getMessage());
                                 }
                             }, new Action() {
                                 @Override
@@ -260,6 +277,8 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                                 public void accept(PolarHrData polarHrData) throws Throwable {
                                     for (PolarHrData.PolarHrSample sample : polarHrData.getSamples()) {
                                         Log.d(TAG, "HR     bpm: " + sample.getHr() + "  rr (ms): " + sample.getRrsMs() + "  rrAvailable: " + sample.getRrAvailable() + "  contactStatus: " + sample.getContactStatus() + "  contactStatusSupported: " + sample.getContactStatusSupported());
+                                        updateLabel(polarHrLabel, "HR: " + sample.getHr());
+                                        updateLabel(polarHrRrLabel, "RR (available: " + sample.getRrAvailable() + "): " + sample.getRrsMs() + " ms");
                                     }
                                 }
                             }, new Consumer<Throwable>() {
@@ -267,6 +286,8 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                                 public void accept(Throwable throwable) throws Throwable {
                                     toggleButtonUp(polarHrButton);
                                     Log.e(TAG, "Polar HR Stream Failed. Reason " + throwable.getMessage());
+                                    updateLabel(polarHrLabel, "HR: not available (some errors were encountered)");
+                                    updateLabel(polarHrRrLabel, "RR: not available (some errors were encountered)");
                                 }
                             }, new Action() {
                                 @Override
