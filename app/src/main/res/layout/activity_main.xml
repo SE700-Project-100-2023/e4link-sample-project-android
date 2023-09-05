@@ -5,15 +5,17 @@
     tools:context=".MainActivity"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="@android:color/holo_blue_dark">
+    android:background="@android:color/holo_green_light">
 
     <TextView
         android:id="@+id/status"
+        android:textColor="@android:color/black"
         android:layout_width="match_parent"
         android:layout_height="36dp"/>
 
     <TextView
         android:id="@+id/deviceName"
+        android:textColor="@android:color/black"
         android:layout_below="@id/status"
         android:layout_width="match_parent"
         android:layout_height="36dp"/>
@@ -28,6 +30,7 @@
 
         <TextView
             android:id="@+id/accel_label"
+            android:textColor="@android:color/black"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
@@ -41,11 +44,13 @@
             android:orientation="horizontal">
 
             <TextView
+                android:textColor="@android:color/black"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/accel_x" />
 
             <TextView
+                android:textColor="@android:color/black"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:width="50dp"
@@ -53,11 +58,13 @@
                 android:text="@string/emptyText"/>
 
             <TextView
+                android:textColor="@android:color/black"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/accel_y" />
 
             <TextView
+                android:textColor="@android:color/black"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:width="50dp"
@@ -65,11 +72,13 @@
                 android:text="@string/emptyText"/>
 
             <TextView
+                android:textColor="@android:color/black"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/accel_z" />
 
             <TextView
+                android:textColor="@android:color/black"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:width="50dp"
@@ -80,6 +89,7 @@
 
         <TextView
             android:id="@+id/bvp_label"
+            android:textColor="@android:color/black"
             android:layout_marginTop="10dp"
             android:layout_below="@id/accel_area"
             android:layout_width="wrap_content"
@@ -88,6 +98,7 @@
 
         <TextView
             android:layout_below="@id/bvp_label"
+            android:textColor="@android:color/black"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/bvp"
@@ -95,6 +106,7 @@
 
         <TextView
             android:id="@+id/eda_label"
+            android:textColor="@android:color/black"
             android:layout_marginTop="10dp"
             android:layout_below="@id/bvp"
             android:layout_width="wrap_content"
@@ -103,6 +115,7 @@
 
         <TextView
             android:layout_below="@id/eda_label"
+            android:textColor="@android:color/black"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/eda"
@@ -110,6 +123,7 @@
 
         <TextView
             android:id="@+id/ibi_label"
+            android:textColor="@android:color/black"
             android:layout_marginTop="10dp"
             android:layout_below="@id/eda"
             android:layout_width="wrap_content"
@@ -118,6 +132,7 @@
 
         <TextView
             android:layout_below="@id/ibi_label"
+            android:textColor="@android:color/black"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/ibi"
@@ -125,6 +140,7 @@
 
         <TextView
             android:id="@+id/temp_label"
+            android:textColor="@android:color/black"
             android:layout_marginTop="10dp"
             android:layout_below="@id/ibi"
             android:layout_width="wrap_content"
@@ -133,6 +149,7 @@
 
         <TextView
             android:layout_below="@id/temp_label"
+            android:textColor="@android:color/black"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/temperature"
@@ -140,6 +157,7 @@
 
         <TextView
             android:id="@+id/battery_label"
+            android:textColor="@android:color/black"
             android:layout_marginTop="10dp"
             android:layout_below="@id/temperature"
             android:layout_width="wrap_content"
@@ -148,6 +166,7 @@
 
         <TextView
             android:layout_below="@id/battery_label"
+            android:textColor="@android:color/black"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/battery"
@@ -155,6 +174,7 @@
 
         <TextView
             android:layout_below="@id/wrist_status_label"
+            android:textColor="@android:color/black"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/wrist_status_label"
@@ -165,6 +185,54 @@
             android:text="STOP STREAMING"
             android:layout_width="match_parent"
             android:layout_height="44dp" />
+
+        <Button
+            android:id="@+id/polarBroadcastButton"
+            android:text="Polar Broadcast"
+            android:layout_width="match_parent"
+            android:layout_height="44dp" />
+
+        <Button
+            android:id="@+id/polarConnectButton"
+            android:text="Polar Scan"
+            android:layout_width="match_parent"
+            android:layout_height="44dp" />
+
+        <Button
+            android:id="@+id/polarScanButton"
+            android:text="Polar Connect"
+            android:layout_width="match_parent"
+            android:layout_height="44dp" />
+
+        <Button
+            android:id="@+id/polarHrButton"
+            android:text="Polar Heart Rate"
+            android:layout_width="match_parent"
+            android:layout_height="44dp" />
+
+        <TextView
+            android:id="@+id/polar_connection_status_label"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Polar HR Connection Status goes here" />
+
+        <TextView
+            android:id="@+id/polar_hr_label"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Polar HR Stats go here" />
+
+        <TextView
+            android:id="@+id/polar_hr_rr_label"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Polar HR RR Stats go here" />
 
     </LinearLayout>
 
