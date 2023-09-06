@@ -768,7 +768,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
     String getCurrentDateTimeAsIso() {
         TimeZone tz = TimeZone.getTimeZone("UTC");
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm'Z'");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss.SSS'Z'");
         df.setTimeZone(tz);
         return df.format(new Date());
     }
