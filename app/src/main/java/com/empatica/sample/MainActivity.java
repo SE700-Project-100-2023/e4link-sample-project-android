@@ -12,6 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
@@ -44,8 +45,13 @@ import com.polar.sdk.api.model.PolarDeviceInfo;
 import com.polar.sdk.api.model.PolarHrBroadcastData;
 import com.polar.sdk.api.model.PolarHrData;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -98,6 +104,8 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
     private TextView polarHrRrLabel;
 
+    private TextView dataSavingStatusLabel;
+
     private LinearLayout dataCnt;
 
     private PolarBleApi polarApi;
@@ -107,6 +115,11 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private Disposable polarHrDisposable;
     private Boolean isPolarDeviceConnected = false;
     private String polarDeviceId = "C5040528";
+
+    private Boolean isRecordingToLogs = false;
+    private String skinConductanceLog = "SKIN CONDUCTANCE LOG\n";
+    private String heartRateLog = "HEART RATE LOG\n";
+    private String heartRateVariabilityLog = "HEART RATE VARIABILITY LOG\n";
 
 
     @Override
@@ -155,12 +168,18 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
         polarHrRrLabel = (TextView) findViewById(R.id.polar_hr_rr_label);
 
+        dataSavingStatusLabel = (TextView) findViewById(R.id.data_saving_status_label);
+
         final Button disconnectButton = findViewById(R.id.disconnectButton);
 
-        final Button polarBroadcastButton = findViewById(R.id.polarBroadcastButton);;
-        final Button polarConnectButton = findViewById(R.id.polarConnectButton);;
-        final Button polarScanButton = findViewById(R.id.polarScanButton);;
-        final Button polarHrButton = findViewById(R.id.polarHrButton);;
+        final Button polarBroadcastButton = findViewById(R.id.polarBroadcastButton);
+        final Button polarConnectButton = findViewById(R.id.polarConnectButton);
+        final Button polarScanButton = findViewById(R.id.polarScanButton);
+        final Button polarHrButton = findViewById(R.id.polarHrButton);
+
+        final Button startRecordingButton = findViewById(R.id.startRecordingButton);
+        final Button stopRecordingButton = findViewById(R.id.stopRecordingButton);
+        final Button saveDataButton = findViewById(R.id.saveToFileButton);
 
         disconnectButton.setOnClickListener(new View.OnClickListener() {
 
@@ -279,6 +298,12 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                                         Log.d(TAG, "HR     bpm: " + sample.getHr() + "  rr (ms): " + sample.getRrsMs() + "  rrAvailable: " + sample.getRrAvailable() + "  contactStatus: " + sample.getContactStatus() + "  contactStatusSupported: " + sample.getContactStatusSupported());
                                         updateLabel(polarHrLabel, "HR: " + sample.getHr());
                                         updateLabel(polarHrRrLabel, "RR (available: " + sample.getRrAvailable() + "): " + sample.getRrsMs() + " ms");
+
+                                        if (isRecordingToLogs) {
+                                            String currentDateTime = getCurrentDateTimeAsIso();
+                                            heartRateLog += currentDateTime + " " + sample.getHr() + "\n";
+                                            heartRateVariabilityLog += currentDateTime + " " + sample.getRrsMs() + "\n";
+                                        }
                                     }
                                 }
                             }, new Consumer<Throwable>() {
@@ -366,6 +391,53 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
             @Override
             public void polarFtpFeatureReady(@NonNull String s) {
 
+            }
+        });
+
+        startRecordingButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isRecordingToLogs = true;
+                String message = "Started recording to logs";
+                Log.d(TAG, message);
+                dataSavingStatusLabel.setText(message);
+            }
+        });
+
+        stopRecordingButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isRecordingToLogs = false;
+                String message = "Stopped recording to logs";
+                Log.d(TAG, message);
+                dataSavingStatusLabel.setText(message);
+            }
+        });
+
+        saveDataButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick (View view) {
+                String currentDateTime = getCurrentDateTimeAsIso();
+
+                Log.d(TAG, "Attempting to save data...");
+                Log.d(TAG, "Current time is: " + currentDateTime);
+                boolean isHeartRateLogWriteSuccessful = writeToFile(currentDateTime, "HeartRate" + currentDateTime + ".txt", heartRateLog);
+                boolean isHeartRateVariabilityLogWriteSuccessful = writeToFile(currentDateTime, "HeartRateVariability" + currentDateTime + ".txt", heartRateVariabilityLog);
+                boolean isSkinConductanceLogWriteSuccessful = writeToFile(currentDateTime, "SkinConductance" + currentDateTime + ".txt", skinConductanceLog);
+
+                if (isHeartRateLogWriteSuccessful) heartRateLog = "";
+                if (isHeartRateVariabilityLogWriteSuccessful) heartRateVariabilityLog = "";
+                if (isSkinConductanceLogWriteSuccessful) skinConductanceLog = "";
+
+                if (isHeartRateLogWriteSuccessful && isHeartRateVariabilityLogWriteSuccessful && isSkinConductanceLogWriteSuccessful) {
+                    dataSavingStatusLabel.setText("Successfully wrote logs to file");
+                } else {
+                    String errorLabel = "Did not write ";
+                    if (!isHeartRateLogWriteSuccessful) errorLabel += "HR_log ";
+                    if (!isHeartRateVariabilityLogWriteSuccessful) errorLabel += "HRV_log ";
+                    if (!isSkinConductanceLogWriteSuccessful) errorLabel += "SC_log";
+                    dataSavingStatusLabel.setText(errorLabel);
+                }
             }
         });
 
@@ -582,7 +654,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
             deviceManager.startScanning();
             // The device manager has established a connection
 
-            hide();
+            //hide();
 
         } else if (status == EmpaStatus.CONNECTED) {
 
@@ -592,7 +664,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
             updateLabel(deviceNameLabel, "");
 
-            hide();
+            //hide();
         }
     }
 
@@ -616,6 +688,11 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     @Override
     public void didReceiveGSR(float gsr, double timestamp) {
         updateLabel(edaLabel, "" + gsr + " @ " + getDateTime(timestamp) + " - " + timestamp );
+
+        if (isRecordingToLogs) {
+            String currentDateTime = getCurrentDateTimeAsIso();
+            skinConductanceLog += currentDateTime + " " + gsr + "\n";
+        }
     }
 
     public static String getDateTime(double epochTime) {
@@ -687,6 +764,36 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                 }
             }
         });
+    }
+
+    String getCurrentDateTimeAsIso() {
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm'Z'");
+        df.setTimeZone(tz);
+        return df.format(new Date());
+    }
+
+    boolean writeToFile(String directory, String fileName, String content) {
+        boolean isSuccessful = false;
+
+        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        File newDir = new File(path + "/" + directory);
+        Log.d(TAG, "Saving " + fileName);
+        try {
+            if (!newDir.exists()) {
+                newDir.mkdir();
+            }
+            FileOutputStream writer = new FileOutputStream(new File(newDir, fileName));
+            writer.write(content.getBytes());
+            writer.close();
+            Log.d(TAG, "Wrote to file: " + fileName);
+            isSuccessful = true;
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to write to file: " + fileName);
+            e.printStackTrace();
+        }
+
+        return isSuccessful;
     }
 
     void toggleButtonDown(Button button) {
