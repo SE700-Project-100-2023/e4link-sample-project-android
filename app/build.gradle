@@ -8,7 +8,7 @@ android {
     compileSdk 34
     buildToolsVersion '34.0.0'
     defaultConfig {
-        applicationId 'com.empatica.empalinksample'
+        applicationId 'nz.ac.auckland.ecse2023.project100'
         minSdkVersion 24
         minSdk 24
         targetSdk 34
